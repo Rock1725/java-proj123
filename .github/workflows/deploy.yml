@@ -57,7 +57,7 @@ jobs:
           echo "================ CLONE OR PULL REPOSITORY ================"
 
           if [ ! -d "$APP_DIR" ]; then
-            git clone https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPOSITORY.git $APP_DIR
+            git clone https://github.com/Rock1725/java-proj123.git $APP_DIR
           else
             cd $APP_DIR
             git pull origin main
