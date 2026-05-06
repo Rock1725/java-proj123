@@ -52,6 +52,17 @@ jobs:
 
           set -e
 
+          APP_DIR=/home/$EC2_USER/project-task-service
+
+          echo "================ CLONE OR PULL REPOSITORY ================"
+
+          if [ ! -d "$APP_DIR" ]; then
+            git clone https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPOSITORY.git $APP_DIR
+          else
+            cd $APP_DIR
+            git pull origin main
+          fi
+
           echo "Connected Successfully"
 
           JWT_PUBLIC_JWK=$(echo "$JWT_B64" | base64 -d)
