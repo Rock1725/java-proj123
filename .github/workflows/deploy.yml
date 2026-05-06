@@ -1,3 +1,4 @@
+```yaml id="c9r2mn"
 name: Deploy to EC2
 
 on:
@@ -11,11 +12,9 @@ jobs:
 
     steps:
 
-      # Checkout Code
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # Setup Java
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
@@ -23,17 +22,14 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      # Build Project
       - name: Build with Maven
         run: mvn clean package -DskipTests
 
-      # Setup SSH Agent
       - name: Set up SSH Key
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
-      # Test JWT Injection
       - name: Test JWT_PUBLIC_JWK systemd injection
         env:
           EC2_USER: ${{ secrets.EC2_USER }}
@@ -45,7 +41,6 @@ jobs:
 
           echo "Encoding JWT JSON..."
 
-          # Encode JWT safely
           JWT_B64=$(echo "$JWT_PUBLIC_JWK" | base64 -w 0)
 
           echo "Connecting to EC2..."
@@ -56,45 +51,42 @@ jobs:
              export EC2_USER='$EC2_USER' && \
              bash -s" << 'ENDSSH'
 
-            set -e
+          set -e
 
-            echo "Connected Successfully"
+          echo "Connected Successfully"
 
-            # Decode JWT
-            JWT_PUBLIC_JWK=$(echo "$JWT_B64" | base64 -d)
+          JWT_PUBLIC_JWK=$(echo "$JWT_B64" | base64 -d)
 
-            echo "================ DECODED JWT ================"
-            echo "$JWT_PUBLIC_JWK"
+          echo "================ DECODED JWT ================"
+          echo "$JWT_PUBLIC_JWK"
 
-            # Create dummy service
-            sudo tee /etc/systemd/system/test-jwt.service > /dev/null << EOF
-[Unit]
-Description=Test JWT Environment
+          sudo tee /etc/systemd/system/test-jwt.service > /dev/null << EOF
+          [Unit]
+          Description=Test JWT Environment
 
-[Service]
-Type=oneshot
+          [Service]
+          Type=oneshot
+          Environment='JWT_PUBLIC_JWK=$JWT_PUBLIC_JWK'
+          ExecStart=/bin/bash -c 'echo "JWT VALUE => \$JWT_PUBLIC_JWK"'
 
-Environment='JWT_PUBLIC_JWK=$JWT_PUBLIC_JWK'
+          [Install]
+          WantedBy=multi-user.target
+          EOF
 
-ExecStart=/bin/bash -c 'echo "JWT VALUE => \$JWT_PUBLIC_JWK"'
+          echo "================ SERVICE FILE ================"
+          sudo cat /etc/systemd/system/test-jwt.service
 
-[Install]
-WantedBy=multi-user.target
-EOF
+          echo "================ RELOAD SYSTEMD ================"
+          sudo systemctl daemon-reload
 
-            echo "================ SERVICE FILE ================"
-            sudo cat /etc/systemd/system/test-jwt.service
+          echo "================ START SERVICE ================="
+          sudo systemctl start test-jwt.service
 
-            echo "================ RELOAD SYSTEMD ================"
-            sudo systemctl daemon-reload
+          echo "================ SERVICE STATUS ================="
+          sudo systemctl status test-jwt.service --no-pager
 
-            echo "================ START SERVICE ================="
-            sudo systemctl start test-jwt.service
-
-            echo "================ SERVICE STATUS ================="
-            sudo systemctl status test-jwt.service --no-pager
-
-            echo "================ LOG OUTPUT =================="
-            sudo journalctl -u test-jwt.service --no-pager
+          echo "================ LOG OUTPUT =================="
+          sudo journalctl -u test-jwt.service --no-pager
 
           ENDSSH
+```
