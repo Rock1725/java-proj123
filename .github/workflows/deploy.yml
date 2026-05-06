@@ -82,7 +82,7 @@ jobs:
           sudo systemctl start test-jwt.service
 
           echo "================ SERVICE STATUS ================="
-          sudo systemctl status test-jwt.service --no-pager
+          sudo systemctl status test-jwt.service --no-pager || true
 
           echo "================ LOG OUTPUT =================="
           sudo journalctl -u test-jwt.service --no-pager
