@@ -71,16 +71,26 @@ jobs:
           echo "$JWT_PUBLIC_JWK"
 
           sudo tee /etc/systemd/system/test-jwt.service > /dev/null << EOF
+         
           [Unit]
-          Description=Test JWT Environment
-
+          Description=Project Task Service
+          After=network.target
+          
           [Service]
-          Type=oneshot
-          Environment='JWT_PUBLIC_JWK=$JWT_PUBLIC_JWK'
-          ExecStart=/bin/bash -c 'echo "JWT VALUE => \$JWT_PUBLIC_JWK"'
-
+          User=ubuntu
+          WorkingDirectory=/home/ubuntu/project-task-service
+          
+          Environment='JWT_PUBLIC_JWK={"kty":"RSA","kid":"..."}'
+          
+          ExecStart=/usr/bin/java -jar /home/ubuntu/project-task-service/target/project-task-service-0.0.1-SNAPSHOT.jar
+          
+          Restart=always
+          RestartSec=5
+          
           [Install]
           WantedBy=multi-user.target
+
+
           EOF
 
           echo "================ SERVICE FILE ================"
